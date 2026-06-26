@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1.7
+
+FROM python:3.12-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+
+FROM base AS deps
+
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY app/requirements.txt app/requirements-dev.txt /tmp/
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --user -r /tmp/requirements.txt \
+    && pip install --user -r /tmp/requirements-dev.txt
+
+
+FROM base AS test
+
+COPY --from=deps /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+COPY app ./app
+COPY tests ./tests
+
+RUN pytest tests
+
+
+FROM base AS runtime
+
+RUN useradd --create-home --shell /usr/sbin/nologin appuser
+
+COPY --from=deps /root/.local /home/appuser/.local
+COPY app ./app
+
+ENV PATH=/home/appuser/.local/bin:$PATH
+
+USER appuser
+
+CMD ["python", "app/manage.py"]

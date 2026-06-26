@@ -1,0 +1,18 @@
+name: traditional-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  traditional:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build traditional image
+        run: docker build -f Dockerfile.traditional -t docker-lab:traditional .
+
+      - name: Run container
+        run: docker run --rm docker-lab:traditional
