@@ -7,6 +7,7 @@ COPY . .
 RUN pip install -r app/requirements.txt \
     && pip install -r app/requirements-dev.txt
 
+ENV PYTHONPATH=/app
 RUN pytest tests
 
 CMD ["python", "app/manage.py"]
