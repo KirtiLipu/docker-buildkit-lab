@@ -1,2 +1,2 @@
 def health():
-    return {"status": "ok", "service": "docker-buildkit-lab"}
+    return {"status": "ok", "service": "docker-buildkit-lab", "env": "stage"}
