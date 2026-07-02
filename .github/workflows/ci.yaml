@@ -2,7 +2,11 @@ name: modern-buildkit-ci
 
 on:
   push:
-    branches: [master]
+    branches: 
+      - master
+      - 'feature/**'
+      - 'release/**'
+
   pull_request:
 
 jobs:
