@@ -49,6 +49,19 @@ jobs:
           secrets: |
             pip_token=${{ secrets.PIP_TOKEN }}
 
+      - name: Build runtime image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.modern
+          target: runtime
+          load: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=registry,ref=${{ env.CACHE_IMAGE }}
+          cache-to: type=registry,ref=${{ env.CACHE_IMAGE }},mode=max
+
       - name: Scan image vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
@@ -71,13 +84,14 @@ jobs:
       - name: Smoke test
         run: docker run --rm ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      - name: Build runtime image
+      - name: Push runtime image
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.modern
           target: runtime
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: |
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
             ${{ env.IMAGE_NAME }}:latest
