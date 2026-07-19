@@ -49,6 +49,28 @@ jobs:
           secrets: |
             pip_token=${{ secrets.PIP_TOKEN }}
 
+      - name: Scan image vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: "table"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+          ignore-unfixed: true
+
+      - name: Scan image secrets
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          scan-type: "secrets"
+          format: "table"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+          ignore-unfixed: true
+
+      - name: Smoke test
+        run: docker run --rm ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
       - name: Build runtime image
         uses: docker/build-push-action@v7
         with:
@@ -61,6 +83,3 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
           cache-from: type=registry,ref=${{ env.CACHE_IMAGE }}
           cache-to: type=registry,ref=${{ env.CACHE_IMAGE }},mode=max
-
-      - name: Smoke test
-        run: docker run --rm ${{ env.IMAGE_NAME }}:${{ github.sha }}
